@@ -4,8 +4,8 @@ let pool = mysql2
     host: "localhost",
     user: "root",
     password: "",
-    database: "hackathon",
+    database: "hackathon_av",
   })
   .promise();
 
-module.exports = pool
+module.exports = pool;

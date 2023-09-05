@@ -6,24 +6,22 @@ import Form from "react-bootstrap/Form";
 import { useState } from "react";
 import axios from "axios";
 import Modal from "react-bootstrap/Modal";
-
+import Swal from "sweetalert2";
 function Users() {
   const [status, setStatus] = useState(true);
+  const [sortOrder, setSortOrder] = useState(null);
   const getStudent = () => {
     axios
-      .get("http://localhost:3000")
+      .get(`http://localhost:3000/?sort=${sortOrder}`)
       .then((res) => {
-        setStudent(
-          res.data.user.sort((a, b) => {
-            if (status == true) {
-              return a.id - b.id;
-            } else {
-              return b.id - a.id;
-            }
-          })
-        );
+        setStudent(res.data.user);
       })
       .catch((err) => console.log(err));
+  };
+  const handleSort = (order) => {
+    setSortOrder(order);
+    setStatus(!status);
+    getStudent();
   };
   useEffect(() => {
     getStudent();
@@ -68,14 +66,24 @@ function Users() {
         axios
           .put(`http://localhost:3000/${id}`, newStudent)
           .then((res) => {
-            alert("Update Successfully");
+            Swal.fire({
+              title: "Good job",
+              text: "Update student successfully",
+              icon: "success",
+              position: "top",
+            });
             getStudent();
             setNewStudent({ name: "", description: "" });
             handleClose2();
           })
           .catch((err) => console.log(err));
       } else {
-        alert("student not found");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Student Not Found!",
+          position: "top",
+        });
       }
     }
   };
@@ -107,24 +115,28 @@ function Users() {
   };
 
   const handleDelete = (i) => {
-    axios
-      .delete(`http://localhost:3000/${student[i].id}`)
-      .then((res) => {
-        alert("Delete successfully");
-        getStudent();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    Swal.fire({
+      title: "Confirm Delete",
+      text: "Are you sure you want to delete this student?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .delete(`http://localhost:3000/${student[i].id}`)
+          .then((res) => {
+            Swal.fire("Deleted!", "Student has been deleted.", "success");
+            getStudent();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    });
   };
-  const handleAsc = () => {
-    setStatus(true);
-    getStudent();
-  };
-  const handleDesc = () => {
-    setStatus(false);
-    getStudent();
-  };
+
   return (
     <div>
       <Button variant="success" onClick={handleShow}>
@@ -160,7 +172,11 @@ function Users() {
           {errorDesc && <p style={{ color: "red" }}>{errorDesc}</p>}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={handleAdd}>
+          <Button
+            variant="success"
+            onClick={handleAdd}
+            style={{ width: "100%" }}
+          >
             Create
           </Button>
         </Modal.Footer>
@@ -174,9 +190,15 @@ function Users() {
             <th>
               ID &nbsp;
               {status ? (
-                <i className="fa-solid fa-sort-down" onClick={handleDesc}></i>
+                <i
+                  className="fa-solid fa-sort-down"
+                  onClick={() => handleSort("desc")}
+                ></i>
               ) : (
-                <i className="fa-solid fa-sort-up" onClick={handleAsc}></i>
+                <i
+                  className="fa-solid fa-sort-up"
+                  onClick={() => handleSort("asc")}
+                ></i>
               )}
             </th>
             <th>Name</th>
@@ -234,7 +256,11 @@ function Users() {
           {errorDesc && <p style={{ color: "red" }}>{errorDesc}</p>}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => handleSave(newStudent.id)}>
+          <Button
+            variant="success"
+            onClick={() => handleSave(newStudent.id)}
+            style={{ width: "100%" }}
+          >
             Update
           </Button>
         </Modal.Footer>
